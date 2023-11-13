@@ -21,7 +21,7 @@ public class BreakingPointPO implements Serializable{
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column
-    private Integer id;
+    private Long id;
 
     @Column
     private String symbol;
@@ -46,7 +46,9 @@ public class BreakingPointPO implements Serializable{
 
     @Override
     public String toString(){
-        return symbol + " " + tradeDate + " " + analyzDate;
+        return symbol + " " + tradeDate + " " + analyzDate + 
+            " " + changeRateOneMonth + " " + changeRateTwoMonth + 
+            " " + changeRateThreeMonth + " " + changeRateFourMonth;
     }
     
 }

@@ -48,9 +48,7 @@ public class BreakingPointUtil {
             int startWeekIndex = i - 24;
             int endWeekIndex = i - 1;
 
-            TradeWeek startWeek = weekList.get(startWeekIndex);
-            TradeWeek endWeek = weekList.get(endWeekIndex);
-                //周成交量 > 平台期周均成交量*5
+            //周成交量 > 平台期周均成交量*5
             BigDecimal avgTradeVolume = new BigDecimal("0");
             BigDecimal maxTradeVolume = new BigDecimal("0");
             for( int j = startWeekIndex; j <= endWeekIndex; j++){
@@ -74,23 +72,67 @@ public class BreakingPointUtil {
                     
             log.info("周成交量 > 平台期最高成交量*2:{}", week);
 
-            BreakingPointPO breakingPoint = new BreakingPointPO();
-            breakingPoint.setSymbol(week.getSymbol());
-            breakingPoint.setTradeDate(week.getStartDate());
-            breakingPoint.setAnalyzDate(new Date());
-
-            resultlist.add(breakingPoint);
+            resultlist.add(buildBreakingPoint(week, weekList,i));
         }
 
         return resultlist;
+    }
+
+    private static BreakingPointPO buildBreakingPoint(TradeWeek bpWeek, List<TradeWeek> weekList, int bpIndex) {
+
+            BreakingPointPO breakingPoint = new BreakingPointPO();
+            breakingPoint.setSymbol(bpWeek.getSymbol());
+            breakingPoint.setTradeDate(bpWeek.getStartDate());
+            breakingPoint.setAnalyzDate(new Date());
+
+            BigDecimal high[] = new BigDecimal[4];
+            for( int i = 0; i < 4; i++){
+                high[i] = new BigDecimal("0");
+            }
+
+            //遍历breakingPorint后4个月每个月的最高价
+            for(int month = 0; month < 4; month++){
+                for( int weekOfMonth = 1; weekOfMonth <= 4; weekOfMonth++){
+                    int tmpIndex = bpIndex + month*4 + weekOfMonth;
+                    if( tmpIndex >= weekList.size() ){
+                        break;
+                    }
+                    TradeWeek tmpWeek = weekList.get(tmpIndex);
+                    if( tmpWeek.getHighestPrice().compareTo(high[month]) > 0 ){
+                        high[month] = tmpWeek.getHighestPrice();
+                    }
+                }
+            }
+
+            for( int i = 0;i < 4;i++){
+                if( high[i].compareTo(new BigDecimal("0")) == 0 ){
+                    break;
+                }   
+
+                BigDecimal changeRate = high[i].subtract(bpWeek.getClosePrice()).divide(bpWeek.getClosePrice(), 4, BigDecimal.ROUND_HALF_UP);
+                switch(i){
+                    case 0:
+                        breakingPoint.setChangeRateOneMonth(changeRate);
+                        break;
+                    case 1:
+                        breakingPoint.setChangeRateTwoMonth(changeRate);
+                        break;
+                    case 2:
+                        breakingPoint.setChangeRateThreeMonth(changeRate);
+                        break;
+                    case 3:
+                        breakingPoint.setChangeRateFourMonth(changeRate);
+                        break;
+                }
+            }
+
+            return breakingPoint;
     }
 
     private static List<TradeWeek>  getWeekList(List<TradeDayPO> tradeDayList) throws Exception {
         List<TradeWeek> tradeWeekList = new ArrayList<>();
 
         TradeWeek tradeWeek = new TradeWeek();
-        
-
         int skipDays = tradeDayList.size() % 5;
         int dayOfWeek = 1;
 

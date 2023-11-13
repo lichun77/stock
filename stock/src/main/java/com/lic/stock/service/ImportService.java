@@ -13,21 +13,59 @@ import java.util.stream.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.lic.stock.repository.StockInfoRepository;
 import com.lic.stock.repository.TradeDayRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
 import com.lic.stock.domain.TradeDayPO;
 
+@Slf4j
 @Service
 public class ImportService {
 
-    private static String directoryPath = "/Users/lichun/Documents/投资/历史行情数据/oneday/";
+    private static String directoryPath = "/Users/lichun/Documents/投资/历史行情数据/a股日线/";
+
+    private int fileCount = 0;
+    private int finishCount = 0;
 
     @Autowired
     TradeDayRepository tradeDayRepository;
+
+    @Autowired
+    StockInfoRepository stockInfRepository;
+
+    public void importSymbol(){
+        try (Stream<Path> paths = Files.walk(Paths.get(directoryPath))) {
+        
+            paths.filter(Files::isRegularFile)
+                .filter(path -> path.toString().endsWith(".csv"))
+                .forEach(filename->{
+                    String symbol = filename.getFileName().toString().substring(0, 9);
+                    String market = filename.getFileName().toString().substring(7, 9);
+                    StockInfo stockInfo = new StockInfo();
+                    stockInfo.setSymbol(symbol);
+                    stockInfo.setMarket(market);
+                    stockInfRepository.save(symbol);
+                }
+        }catch(Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("打开文件失败"+e.getMessage());
+        }
+    }
     
     public void importHistoryData(){
 
+        try {
+            fileCount = (int)Files.list(Paths.get(directoryPath)).count();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
         try (Stream<Path> paths = Files.walk(Paths.get(directoryPath))) {
-        paths.filter(Files::isRegularFile)
+        
+            paths.filter(Files::isRegularFile)
                 .filter(path -> path.toString().endsWith(".csv"))
                 .forEach(this::processFile);
         }catch(Exception e){
@@ -43,6 +81,7 @@ public class ImportService {
             reader.readLine();
 
             String line;
+            int lineCount = 0;
             while ((line = reader.readLine()) != null) {
                 String[] fields = line.split(",");
                 //证券代码,交易时间,开盘价,最高价,最低价,收盘价,前收盘价,涨跌额,涨跌幅,成交量(手),成交额(千元)
@@ -58,14 +97,20 @@ public class ImportService {
                 tradeDay.setChangeAmount(getPriceBigDecimal(fields[7]));
                 tradeDay.setChangeRate(getPctBigDecimal(fields[8]));
                 tradeDay.setTradeVolume(getVolumeBigDecimal(fields[9]));
-                tradeDay.setTradeAmount(getAmountBigDecimal(fields[10]));
+                if(fields.length  > 10){
+                    tradeDay.setTradeAmount(getAmountBigDecimal(fields[10]));
+                }
                 tradeDay.setImportDate(new Date());
 
-                System.out.println(tradeDay.getTradeDate());
-
                 tradeDayRepository.save(tradeDay);
+                lineCount++;
             }
+
+            log.info("导入文件完成[{}/{}]{},记录数 {}",  
+                ++finishCount, fileCount, filePath.getFileName(), lineCount);
+
         } catch (IOException e) {
+            e.printStackTrace();
             throw new UncheckedIOException(e);
         }
     }

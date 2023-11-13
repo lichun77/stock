@@ -14,13 +14,8 @@ public class ImportServiceIT {
     public void importHistoryData(){
 
 
-        String s1 = "20200101";
-        String s2 = "20200102";
 
-        System.out.println();
-        System.out.println();
-        System.out.println(s2.compareTo(s1));
-
+        
         importService.importHistoryData();
 
         System.out.println("***********importHistoryData success*********");
