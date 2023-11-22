@@ -11,4 +11,8 @@ public interface TradeDayRepository extends JpaRepository<TradeDayPO, Long> {
     public List<TradeDayPO> findBySymbolAndTradeDateBetween(String symbol,Date startDate, Date endDate);
 
     public List<TradeDayPO> findBySymbolOrderByTradeDate(String symbol);
+
+    public List<TradeDayPO> findBySymbolAndTradeDateGreaterThanOrderByTradeDate(String symbol,String date);
+
+    public TradeDayPO findBySymbolAndTradeDate(String symbol, String date);
 }

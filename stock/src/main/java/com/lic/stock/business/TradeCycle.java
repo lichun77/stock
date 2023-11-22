@@ -2,7 +2,6 @@ package com.lic.stock.business;
 
 import java.math.BigDecimal;
 
-import javax.persistence.Column;
 
 import com.alibaba.fastjson.JSON;
 import com.lic.stock.domain.TradeDayPO;
@@ -10,9 +9,12 @@ import com.lic.stock.domain.TradeDayPO;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 分析的交易周期，也就是BP的交易日数量
+ */
 @Data
 @Slf4j
-public class TradeWeek {
+public class TradeCycle {
     
     private String startDate;
 
@@ -59,7 +61,7 @@ public class TradeWeek {
 
     }
 
-    //顺序加入后续天
+    //顺序加入后续交易日
     public void addDay(TradeDayPO day) throws Exception{
 
         if (!day.getSymbol().equals(this.symbol)) {
@@ -78,7 +80,8 @@ public class TradeWeek {
         this.lowestPrice = day.getLowestPrice().compareTo(lowestPrice) < 0 ? day.getLowestPrice() : lowestPrice;
         this.changeAmount = day.getClosePrice().subtract( this.getLastClosePrice()  );
         changeRate = this.changeAmount.divide( this.getLastClosePrice(), 4, BigDecimal.ROUND_HALF_UP );
-        tradeAmount = this.tradeAmount.add( day.getTradeAmount() );
+        
+        //tradeAmount = this.tradeAmount.add( day.getTradeAmount() ); 部分记录成交额为空，忽略此字段
         tradeVolume = this.tradeVolume.add( day.getTradeVolume() );
 
     }

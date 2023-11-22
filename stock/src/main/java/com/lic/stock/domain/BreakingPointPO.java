@@ -24,10 +24,18 @@ public class BreakingPointPO implements Serializable{
     private Long id;
 
     @Column
-    private String symbol;
+    private String strategyProfileCode;
 
     @Column
+    private String symbol;
+
+    /**end day of BP */
+    @Column
     private String tradeDate;
+
+    /**  BreakingPoint 的涨幅 */
+    @Column
+    private BigDecimal changeRateBp;
 
     @Column
     private Date analyzDate;
@@ -43,6 +51,12 @@ public class BreakingPointPO implements Serializable{
 
     @Column 
     BigDecimal changeRateFourMonth;
+
+    @Column 
+    BigDecimal changeRateOneDay;
+
+    @Column 
+    BigDecimal changeRateOneCycle;
 
     @Override
     public String toString(){
